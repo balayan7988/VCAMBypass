@@ -1,7 +1,4 @@
-# VCAM.dylib iOS越狱插件 - 授权绕过 Theos Tweak
-# 通过 GitHub Actions 自动构建 .deb 包
-
-name: Build VCAMBypass .deb
+name: Build VCAMBypass
 
 on:
   push:
@@ -30,41 +27,46 @@ jobs:
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
           mkdir -p "$THEOS/sdks"
           ln -sf "$SDK_PATH" "$THEOS/sdks/iPhoneOS.sdk"
-          echo "SDK: $SDK_PATH"
 
-      - name: Build (Theos Tweak → .deb)
+      - name: Build Theos .deb
         run: |
           export THEOS=~/theos
-          cd "$THEOS"
-          git submodule update --init --recursive || true
-          cd $GITHUB_WORKSPACE
+          cd "$THEOS" && git submodule update --init --recursive || true
+          cd "$GITHUB_WORKSPACE"
           make -f Makefile clean
           make -f Makefile package FINALPACKAGE=1
 
-      - name: Build (Standalone dylib for TrollFools)
+      - name: Build TrollFools standalone .dylib
         run: |
-          export THEOS=~/theos
-          cd $GITHUB_WORKSPACE
-          make -f Makefile_TrollFools clean
-          make -f Makefile_TrollFools
           mkdir -p trollfools_out
-          cp obj/VCAMBypass.dylib trollfools_out/VCAMBypass.dylib 2>/dev/null || true
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          clang -arch arm64 -arch arm64e \
+            -dynamiclib \
+            -isysroot "$SDK" \
+            -miphoneos-version-min=14.0 \
+            -fobjc-arc \
+            -framework Foundation -framework UIKit \
+            -install_name @rpath/VCAMBypass.dylib \
+            -o trollfools_out/VCAMBypass.dylib \
+            Tweak_TrollFools.x
+          ldid -S trollfools_out/VCAMBypass.dylib
           ls -lh trollfools_out/
 
-      - name: Upload .deb artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: VCAMBypass-deb
+          name: VCAMBypass
           path: |
             packages/*.deb
             trollfools_out/*.dylib
           if-no-files-found: error
 
-      - name: Create Release (on tag)
+      - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          gh release create ${{ github.ref_name }} \
+          gh release create "${{ github.ref_name }}" \
             packages/*.deb \
+            trollfools_out/*.dylib \
             --title "VCAMBypass ${{ github.ref_name }}" \
             --generate-notes
         env:
