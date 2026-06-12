@@ -48,7 +48,7 @@ jobs:
             -framework Foundation -framework UIKit \
             -install_name @rpath/VCAMBypass.dylib \
             -o trollfools_out/VCAMBypass.dylib \
-            Tweak_TrollFools.x
+            Tweak_TrollFools.m
           ldid -S trollfools_out/VCAMBypass.dylib
           ls -lh trollfools_out/
 
