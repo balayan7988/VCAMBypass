@@ -18,20 +18,24 @@ jobs:
       - name: Setup Theos
         run: |
           brew install make ldid
-          git clone --depth 1 https://github.com/theos/theos.git /opt/theos
-          echo "THEOS=/opt/theos" >> $GITHUB_ENV
-          echo "/opt/theos/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
+          export THEOS=~/theos
+          git clone --depth 1 https://github.com/theos/theos.git "$THEOS"
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
+          echo "$THEOS/bin" >> $GITHUB_PATH
 
       - name: Setup iOS SDK
         run: |
-          # Use Xcode's built-in SDK
+          export THEOS=~/theos
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
-          ln -sf "$SDK_PATH" /opt/theos/sdks/iPhoneOS.sdk
+          mkdir -p "$THEOS/sdks"
+          ln -sf "$SDK_PATH" "$THEOS/sdks/iPhoneOS.sdk"
           echo "SDK: $SDK_PATH"
 
       - name: Build
         run: |
-          cd /opt/theos
+          export THEOS=~/theos
+          cd "$THEOS"
           git submodule update --init --recursive || true
           cd $GITHUB_WORKSPACE
           make clean
