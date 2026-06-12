@@ -1,0 +1,12 @@
+ARCHS = arm64 arm64e
+TARGET := iphone:clang:latest:12.0
+
+include $(THEOS)/makefiles/common.mk
+
+TOOL_NAME = VCAMBypass
+VCAMBypass_FILES = Tweak_TrollFools.x
+VCAMBypass_CFLAGS = -fobjc-arc -dynamiclib
+VCAMBypass_LDFLAGS = -dynamiclib -install_name @rpath/VCAMBypass.dylib
+VCAMBypass_INSTALL_PATH = /Library/MobileSubstrate/DynamicLibraries
+
+include $(THEOS_MAKE_PATH)/tool.mk

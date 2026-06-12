@@ -32,20 +32,32 @@ jobs:
           ln -sf "$SDK_PATH" "$THEOS/sdks/iPhoneOS.sdk"
           echo "SDK: $SDK_PATH"
 
-      - name: Build
+      - name: Build (Theos Tweak → .deb)
         run: |
           export THEOS=~/theos
           cd "$THEOS"
           git submodule update --init --recursive || true
           cd $GITHUB_WORKSPACE
-          make clean
-          make package FINALPACKAGE=1
+          make -f Makefile clean
+          make -f Makefile package FINALPACKAGE=1
+
+      - name: Build (Standalone dylib for TrollFools)
+        run: |
+          export THEOS=~/theos
+          cd $GITHUB_WORKSPACE
+          make -f Makefile_TrollFools clean
+          make -f Makefile_TrollFools
+          mkdir -p trollfools_out
+          cp obj/VCAMBypass.dylib trollfools_out/VCAMBypass.dylib 2>/dev/null || true
+          ls -lh trollfools_out/
 
       - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
         with:
           name: VCAMBypass-deb
-          path: packages/*.deb
+          path: |
+            packages/*.deb
+            trollfools_out/*.dylib
           if-no-files-found: error
 
       - name: Create Release (on tag)
