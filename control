@@ -1,0 +1,9 @@
+Package: com.local.vcambypass
+Name: VCAMBypass
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Local authorization bypass hooks for VCAM.dylib
+Maintainer: local
+Author: local
+Section: Tweaks
+Depends: mobilesubstrate

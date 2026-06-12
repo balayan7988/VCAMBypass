@@ -1,0 +1,55 @@
+# VCAM.dylib iOS越狱插件 - 授权绕过 Theos Tweak
+# 通过 GitHub Actions 自动构建 .deb 包
+
+name: Build VCAMBypass .deb
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Theos
+        run: |
+          brew install make ldid
+          git clone --depth 1 https://github.com/theos/theos.git /opt/theos
+          echo "THEOS=/opt/theos" >> $GITHUB_ENV
+          echo "/opt/theos/bin" >> $GITHUB_PATH
+
+      - name: Setup iOS SDK
+        run: |
+          # Use Xcode's built-in SDK
+          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          ln -sf "$SDK_PATH" /opt/theos/sdks/iPhoneOS.sdk
+          echo "SDK: $SDK_PATH"
+
+      - name: Build
+        run: |
+          cd /opt/theos
+          git submodule update --init --recursive || true
+          cd $GITHUB_WORKSPACE
+          make clean
+          make package FINALPACKAGE=1
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VCAMBypass-deb
+          path: packages/*.deb
+          if-no-files-found: error
+
+      - name: Create Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          gh release create ${{ github.ref_name }} \
+            packages/*.deb \
+            --title "VCAMBypass ${{ github.ref_name }}" \
+            --generate-notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

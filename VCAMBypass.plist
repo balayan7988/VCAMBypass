@@ -1,0 +1,15 @@
+{
+    Filter = {
+        Bundles = (
+            "com.apple.springboard"
+        );
+        Executables = (
+            "WeChat",
+            "微信",
+            "TikTok",
+            "Douyin",
+            "Camera",
+            "FaceTime"
+        );
+    };
+}
